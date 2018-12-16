@@ -1,7 +1,8 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 
 # Grab application version
-VERSION=$(_release/bin/gdrive-osx-x64 version | awk 'NR==1 {print $2}')
+GDRIVE=_release/bin/gdrive-linux-x64
+VERSION=$($GDRIVE version | awk 'NR==1 {print $2}')
 
 declare -a filenames
 filenames=(
@@ -77,11 +78,19 @@ ROW_TEMPLATE="| [{{name}}]({{url}}) | $VERSION | {{description}} | {{sha}} |"
 # Print header
 echo "$HEADER"
 
+PARENT=$($GDRIVE list -q "name='gdrive'" --no-header --name-width 0 | cut -d" " -f 1 -)
+
 for name in ${filenames[@]}; do
     bin_path="_release/bin/$name"
 
-    # Upload file
-    url=$(gdrive upload --share $bin_path | awk '/https/ {print $7}')
+    # Upload or update file
+    BIN=$($GDRIVE list -q "'$PARENT' in parents and name = '$name'" --no-header --name-width 0 | cut -d" " -f1 -)
+    if [ -z "$BIN" ]; then
+        BIN=$($GDRIVE upload --share $bin_path -p $PARENT | cut -d$'\n' -f2 - | cut -d" " -f2 -)
+    else
+        $GDRIVE update "$BIN" "$bin_path" &> /dev/null
+    fi
+    url="https://drive.google.com/a/sabanciuniv.edu/uc?id=$BIN&export=download"
 
     # Shasum
     sha="$(shasum -b $bin_path | awk '{print $1}')"
