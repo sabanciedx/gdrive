@@ -90,7 +90,7 @@ for name in ${filenames[@]}; do
     else
         $GDRIVE update "$BIN" "$bin_path" &> /dev/null
     fi
-    url="https://drive.google.com/a/sabanciuniv.edu/uc?id=$BIN&export=download"
+    url="https://drive.google.com/uc?id=$BIN&export=download"
 
     # Shasum
     sha="$(shasum -b $bin_path | awk '{print $1}')"
